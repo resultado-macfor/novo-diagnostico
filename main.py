@@ -78,7 +78,7 @@ if not gemini_api_key:
     st.error("Chave da API Gemini não encontrada. Configure GEM_API_KEY.")
     st.stop()
 genai.configure(api_key=gemini_api_key)
-modelo_gemini = genai.GenerativeModel("gemini-1.5-pro")
+modelo_gemini = genai.GenerativeModel("gemini-2.5-pro")
 
 anthropic_api_key = None
 if hasattr(st, 'secrets') and 'ANTH_KEY' in st.secrets:
