@@ -504,7 +504,7 @@ def gerar_texto(prompt, sistema=SISTEMA_BASE, especialista=None):
         try:
             response = cliente_anthropic.messages.create(
                 model="claude-sonnet-4-20250514",
-                max_tokens=8096,
+                max_tokens=16000,
                 system=sistema_final,
                 messages=[{"role": "user", "content": prompt}]
             )
@@ -1438,57 +1438,222 @@ def gerar_slides_completos(prospect, insights_seo, insights_social, insights_tra
     if recomendacoes and recomendacoes.strip():
         conteudo_para_slides += f"\n\n=== RECOMENDACOES ESTRATEGICAS CONSOLIDADAS (pelo CMO) ===\n{recomendacoes}"
 
-    info_contexto = f"""PROSPECT: {prospect}
-CONCORRENTES: {', '.join(concorrentes)}
-PALAVRAS-CHAVE: {', '.join(kw_principais)}
-SECOES COM DADOS DISPONIVEIS: {', '.join(secoes_disponiveis)}"""
+    conc_str = ', '.join(concorrentes) if concorrentes else 'identificar nos dados'
+    kw_str = ', '.join(kw_principais) if kw_principais else 'extrair dos dados'
 
-    prompt = f"""Voce e um diretor criativo de apresentacoes estrategicas. Sua missao e transformar as analises abaixo
-em uma apresentacao de slides de diagnostico estrategico para o cliente {prospect}.
+    info_contexto = f"""PROSPECT: {prospect}
+CONCORRENTES: {conc_str}
+PALAVRAS-CHAVE: {kw_str}
+CANAIS COM DADOS DISPONIVEIS: {', '.join(secoes_disponiveis) if secoes_disponiveis else 'contexto geral'}"""
+
+    prompt = f"""Voce e o diretor de estrategia da Macfor preparando a apresentacao de diagnostico mais impactante
+que {prospect} ja recebeu. Esta apresentacao sera exibida ao vivo para o CEO/CMO e precisa:
+1. Demonstrar profundidade analitica que nenhuma outra agencia entrega
+2. Traduzir dados em inteligencia de negocios acionavel
+3. Fazer o cliente pensar "preciso dessa equipe trabalhando comigo"
 
 {info_contexto}
 
+MATERIAL COMPLETO DAS ANALISES (base para os slides -- extraia a INTELIGENCIA, nao os dados brutos):
 {conteudo_para_slides}
 
-DIRETRIZES PARA A APRESENTACAO:
+== FILOSOFIA DA APRESENTACAO ==
+Esta NAO e uma apresentacao de dados. E uma apresentacao de INTELIGENCIA DE MERCADO.
+Cada slide deve fazer o cliente ter um "momento aha" -- uma descoberta que muda sua perspectiva.
+Dados sao o combustivel, mas INSIGHTS sao o motor. ESTRATEGIA e o destino.
 
-1. ESTRUTURA ADAPTATIVA: Crie APENAS os slides necessarios para comunicar os insights com impacto.
-   Nao ha numero fixo -- pode ser 20, 40 ou 60 slides dependendo da profundidade dos dados.
-   Cada slide deve ter um proposito claro. Se nao tem conteudo relevante, nao crie o slide.
+O cliente contratou a Macfor para ver o que ele nao consegue ver sozinho.
+Mostre conexoes que so um especialista com 30 anos de experiencia enxergaria.
 
-2. NARRATIVA ESTRATEGICA: A apresentacao deve contar uma historia:
-   - Abertura: contexto e escopo do diagnostico
-   - Sumario executivo: highlights que capturam atencao imediata
-   - Analises por canal: APENAS para canais com dados disponiveis ({', '.join(secoes_disponiveis)})
-   - Para cada canal: scorecard > analise detalhada > insights > conclusao (problema/implicacao/solucao)
-   - Visao integrada: como os canais se conectam
-   - Recomendacoes priorizadas: roadmap estrategico
-   - Encerramento
+== ESTRUTURA OBRIGATORIA (siga esta ordem, crie TODOS os slides necessarios) ==
 
-3. REGRAS DE CONTEUDO POR SLIDE:
-   - Titulo claro e direto (maximo 10 palavras)
-   - Conteudo conciso: bullet points, nao paragrafos
-   - Maximo 5-7 bullets por slide. Se precisar de mais, divida em 2 slides
-   - Cada insight deve ter o formato: dado/observacao + implicacao para o negocio
-   - NUNCA apresente dados brutos sem interpretacao
-   - Inclua indicacoes de [GRAFICO: descricao] onde fizer sentido visual
+BLOCO 1: ABERTURA E CONTEXTO (3-5 slides)
+- Slide de titulo: "Diagnostico Estrategico Digital | {prospect}"
+- Escopo e metodologia: o que foi analisado, quais fontes de dados, metodologia Macfor DIF
+- O cenario digital do setor: contexto macro do mercado em que {prospect} atua
+- "The Headline": a descoberta MAIS impactante de todo o diagnostico em 1 frase
+  (ex: "{prospect} esta perdendo R$X/mes em oportunidades digitais capturadas por concorrentes")
 
-4. FORMATO DE SAIDA (siga rigorosamente):
-   Cada slide deve seguir este formato exato:
+BLOCO 2: SUMARIO EXECUTIVO (3-5 slides)
+- Scorecard geral: nota de maturidade digital de {prospect} (0-100 ou escala 1-5 por dimensao)
+- Top 5 descobertas: as 5 descobertas mais impactantes, cada uma com dado + implicacao financeira
+- Mapa de calor competitivo: onde {prospect} ganha, empata e perde vs concorrentes
+- "O custo da inacao": o que acontece se nada mudar em 6-12 meses (cenario pessimista quantificado)
 
-   ==SLIDE==
-   TITULO: [titulo do slide]
-   CONTEUDO:
-   [conteudo do slide, com bullets usando "-" e sub-bullets usando "  -"]
-   ==FIM_SLIDE==
+BLOCO 3: ANALISE POR CANAL -- para CADA canal com dados ({', '.join(secoes_disponiveis)}):
+Crie de 4 a 8 slides POR CANAL seguindo esta estrutura:
 
-5. NAO INCLUA slides institucionais da Macfor (quem somos, cases, time, metodologia).
-   Esses serao adicionados separadamente. Foque 100% no diagnostico e inteligencia de mercado.
+  a) SCORECARD DO CANAL: metricas-chave com comparativo vs benchmark e vs concorrentes
+     Cada metrica: valor real | benchmark do setor | melhor concorrente | gap | o que significa
+     [TABELA COMPARATIVA sugerida]
 
-Crie a apresentacao agora. Lembre-se: qualidade e profundidade dos insights importam mais que quantidade de slides."""
+  b) DESCOBERTA PRINCIPAL: o insight mais impactante desse canal
+     Formato: "Os dados revelam que..." + numero real + "o que significa que..." + impacto no negocio
+     Este slide deve ser o "momento aha" do canal
 
-    resultado_ia = gerar_texto(prompt, especialista='estrategico')
-    return parse_slides_ia(resultado_ia)
+  c) ANALISE PROFUNDA: cruzamento de dados que revela padroes ocultos
+     - Correlacoes entre metricas (ex: "a queda de X coincide com o aumento de Y, indicando que...")
+     - Comparativos temporais (evolucao e tendencia)
+     - Comparativos competitivos (quem esta fazendo melhor e o que podemos aprender)
+     [GRAFICOS sugeridos: evolucao temporal, comparativo de barras, distribuicao]
+
+  d) INTELIGENCIA COMPETITIVA do canal: o que os concorrentes fazem que funciona
+     - Estrategia aparente de cada concorrente
+     - Pontos fortes a observar
+     - Vulnerabilidades exploraveis
+
+  e) OPORTUNIDADES IDENTIFICADAS: o que pode ser capturado
+     Para cada oportunidade: descricao + valor estimado + dificuldade + prazo
+     Priorize por ICE Score (Impact x Confidence x Ease)
+
+  f) CONCLUSAO DO CANAL:
+     **Diagnostico**: resume a situacao em 1 frase
+     **Risco**: o que esta em jogo se nao agir
+     **Oportunidade**: o que pode ser ganho com acao correta
+
+BLOCO 4: VISAO INTEGRADA (4-6 slides)
+- Ecossistema digital de {prospect}: como os canais se conectam (ou nao)
+  Ex: "O investimento em SEO esta baixo, forcando dependencia de ads que inflaciona CPC em 40%"
+- Sinergias nao exploradas: oportunidades de cross-channel que ninguem esta fazendo
+  Ex: "Conteudo de blog poderia alimentar social que retroalimenta SEO -- hoje esses canais operam isolados"
+- Analise de vulnerabilidades: riscos sistemicos identificados
+  Ex: "Concentracao de 60% do trafego em organico sem estrategia de retencao = risco de Google Update"
+- Benchmarking cruzado: como {prospect} se compara ao "player ideal" do setor
+  Monte um perfil do "concorrente ideal" baseado nos melhores atributos de cada player
+- Nivel de maturidade digital: onde {prospect} esta no modelo de maturidade vs onde deveria estar
+  [GRAFICO: radar/spider chart sugerido com 6 dimensoes]
+
+BLOCO 5: INTELIGENCIA DE MERCADO (3-5 slides)
+- Tendencias do setor que impactam {prospect}: o que esta mudando e como se preparar
+- Comportamento do consumidor: como o publico-alvo busca, pesquisa e decide neste segmento
+- AI Search e o futuro: como a busca por IA vai impactar o setor nos proximos 2 anos
+- Oportunidades white-space: espacos de mercado digital nao ocupados por ninguem
+
+BLOCO 6: PLANO ESTRATEGICO (5-8 slides)
+- Tese estrategica central: "A Macfor recomenda..." (1 slide poderoso com a direcao geral)
+- Matriz de priorizacao: todas as oportunidades plotadas em Impacto x Esforco (4 quadrantes)
+  [GRAFICO: matriz 2x2 sugerida]
+- Quick Wins (0-30 dias): acoes de impacto imediato com resultado rapido
+  Para cada: acao | KPI | meta | impacto estimado
+- Projetos estrategicos (1-6 meses): iniciativas de medio prazo
+  Para cada: acao | investimento | KPI | ROI projetado
+- Transformacao digital (6-12 meses): projetos que mudam o jogo
+  Para cada: visao | fases | resultado esperado | business case
+- Roadmap visual: timeline de 12 meses com marcos e entregaveis por trimestre
+  [GRAFICO: timeline/gantt sugerido]
+- Business case: investimento total vs retorno projetado
+  | Item | Q1 | Q2 | Q3 | Q4 | Total |
+  ROI esperado, payback period, break-even point
+- OKRs sugeridos: objetivos e key results por trimestre
+
+BLOCO 7: ENCERRAMENTO (2-3 slides)
+- "Por que agir agora": urgencia fundamentada em dados (janela de oportunidade, movimentos de concorrentes)
+- Proximos passos concretos: o que a Macfor propoe como primeiro movimento
+- Slide final: "{prospect} + Macfor = [visao de futuro]" -- encerramento inspiracional mas fundamentado
+
+== REGRAS DE CONTEUDO POR SLIDE ==
+- Titulo: impactante, maximo 8 palavras, pode ser uma pergunta ou afirmacao provocativa
+  BOM: "Voces perdem R$200K/mes em trafego qualificado"
+  RUIM: "Analise de trafego organico"
+- Conteudo: maximo 5-6 bullets por slide. Se precisar de mais, DIVIDA em 2 slides.
+- Cada bullet: DADO REAL + interpretacao/implicacao (nunca dado sem "so what")
+- Use numeros especificos, nao arredonde demais: "34.7%" e melhor que "cerca de 35%"
+- Indique [GRAFICO: descricao] ou [TABELA: descricao] onde visualizacao agregaria valor
+- Tom: autoridade, confianca, inteligencia. Como um McKinsey partner apresentando ao board.
+- NUNCA slides genericos ou com platitudes ("o digital e importante"). SEMPRE especifico e data-driven.
+- QUANTIDADE: Gere TODOS os slides necessarios para cobrir a profundidade dos dados. Se ha dados ricos,
+  gere 50, 60, 70+ slides. Nao economize. Cada insight merece seu espaco. Melhor ter mais slides
+  focados do que poucos slides sobrecarregados.
+
+== FORMATO DE SAIDA (rigorosamente) ==
+==SLIDE==
+TITULO: [titulo do slide]
+CONTEUDO:
+[conteudo com bullets "-" e sub-bullets "  -"]
+==FIM_SLIDE==
+
+NAO inclua slides institucionais da Macfor (quem somos, cases, equipe). Foque 100% em inteligencia.
+
+IMPORTANTE: Gere os BLOCOS 1, 2 e 3 completos (Abertura, Sumario Executivo e Analise por Canal).
+Seja PROFUNDO em cada canal. Gere pelo menos 4 slides por canal analisado."""
+
+    # Primeira chamada: Blocos 1-3 (abertura + sumario + canais)
+    resultado_parte1 = gerar_texto(prompt, especialista='estrategico')
+
+    # Segunda chamada: Blocos 4-7 (visao integrada + inteligencia + plano + encerramento)
+    prompt_parte2 = f"""Voce e o diretor de estrategia da Macfor continuando a apresentacao de diagnostico para {prospect}.
+
+{info_contexto}
+
+RESUMO DO MATERIAL DE ANALISE:
+{conteudo_para_slides[:8000]}
+
+SLIDES JA CRIADOS NA PARTE 1 (para contexto e continuidade, NAO repita):
+{resultado_parte1[:4000]}
+
+AGORA CRIE OS BLOCOS RESTANTES:
+
+BLOCO 4: VISAO INTEGRADA (4-6 slides)
+- Como os canais se conectam (ou falham em se conectar) no ecossistema de {prospect}
+- Sinergias nao exploradas entre canais (ex: SEO + Content + Social = flywheel de crescimento)
+- Analise de vulnerabilidades sistemicas (dependencia de canal, riscos de algoritmo, gaps de dados)
+- Perfil do "player ideal" vs posicao atual de {prospect} (radar chart sugerido)
+- Nivel de maturidade digital em 6 dimensoes: SEO, Social, Paid, Analytics, Content, AI Readiness
+
+BLOCO 5: INTELIGENCIA DE MERCADO (3-5 slides)
+- Tendencias do setor que vao impactar {prospect} nos proximos 12-24 meses
+- Comportamento de busca do consumidor: como o publico pesquisa, compara e decide
+- Impacto da AI Search: quanto do trafego atual esta vulneravel a AI Overview e alternativas
+- Oportunidades white-space: territorios digitais nao ocupados por nenhum player
+
+BLOCO 6: PLANO ESTRATEGICO (5-8 slides)
+- Tese estrategica central da Macfor para {prospect}
+- Matriz de priorizacao: [GRAFICO 2x2] impacto x esforco com todas as oportunidades
+- Quick Wins (0-30 dias): acoes com resultado imediato, cada uma com KPI e meta
+- Projetos estrategicos (1-6 meses): cada um com investimento e ROI projetado
+- Transformacao digital (6-12 meses): projetos que mudam o jogo competitivo
+- Roadmap de 12 meses: [TIMELINE] com marcos por trimestre e OKRs
+- Business case consolidado: investimento total vs retorno projetado, ROI, payback
+
+BLOCO 7: ENCERRAMENTO (2-3 slides)
+- "Por que agir agora": urgencia com base em dados (janela de oportunidade, acoes de concorrentes)
+- Proximos passos: proposta concreta da Macfor como primeiro movimento
+- Visao de futuro: onde {prospect} pode estar em 12 meses com a estrategia certa
+
+== REGRAS ==
+- Mesmas regras da Parte 1: titulos impactantes, dados reais, "so what" em cada bullet
+- Cada bullet: insight + implicacao para o negocio (nunca dado solto)
+- Indique [GRAFICO], [TABELA], [TIMELINE] onde visualizacao agregaria valor
+- Gere TODOS os slides necessarios para cobrir com profundidade
+- Tom: McKinsey Senior Partner apresentando para o board
+
+== FORMATO ==
+==SLIDE==
+TITULO: [titulo]
+CONTEUDO:
+[bullets com "-" e sub-bullets com "  -"]
+==FIM_SLIDE=="""
+
+    resultado_parte2 = gerar_texto(prompt_parte2, especialista='estrategico')
+
+    # Combina as duas partes
+    slides_parte1 = parse_slides_ia(resultado_parte1)
+    slides_parte2 = parse_slides_ia(resultado_parte2)
+
+    # Renumera slides da parte 2
+    total_p1 = sum(1 for s in slides_parte1 if s and s[0] and 'SLIDE' in s[0] and '===' in s[0])
+    slides_renumerados = []
+    contador = 0
+    for s in slides_parte2:
+        if s and s[0] and 'SLIDE' in s[0] and '===' in s[0]:
+            contador += 1
+            novo_num = total_p1 + contador
+            separador = f"{'=' * 50} SLIDE {novo_num} {'=' * 50}"
+            slides_renumerados.append((separador,))
+        else:
+            slides_renumerados.append(s)
+
+    return slides_parte1 + slides_renumerados
 
 
 def parse_slides_ia(texto_ia):
@@ -1704,128 +1869,204 @@ Formate em Markdown com hierarquia clara de titulos. Use **negrito** para dados-
 # =============================================================================
 # GERACAO DE DOCX FORMATADO
 # =============================================================================
-COR_PRIMARIA = RGBColor(0x0D, 0x1B, 0x2A)   # dark navy
-COR_SECUNDARIA = RGBColor(0x1B, 0x4D, 0x89)  # royal blue
-COR_ACCENT = RGBColor(0xE8, 0x6C, 0x00)      # warm orange
-COR_SUCESSO = RGBColor(0x0A, 0x8A, 0x5E)     # emerald green
-COR_TEXTO = RGBColor(0x2D, 0x3A, 0x4A)       # dark slate
-COR_TEXTO_LEVE = RGBColor(0x6C, 0x75, 0x7D)  # muted gray
+COR_PRIMARIA = RGBColor(0x0D, 0x1B, 0x2A)    # dark navy
+COR_SECUNDARIA = RGBColor(0x1B, 0x4D, 0x89)   # royal blue
+COR_ACCENT = RGBColor(0xE8, 0x6C, 0x00)       # warm orange
+COR_SUCESSO = RGBColor(0x0A, 0x8A, 0x5E)      # emerald green
+COR_TEXTO = RGBColor(0x2D, 0x3A, 0x4A)        # dark slate
+COR_TEXTO_LEVE = RGBColor(0x6C, 0x75, 0x7D)   # muted gray
+COR_BG_CLARO = 'F4F7FA'                        # light background
+COR_BG_ACCENT = 'FFF8F0'                       # warm light bg
+COR_BORDA_ACCENT = 'E86C00'                    # border orange
 
 def _setup_styles(doc):
     """Configura estilos profissionais do documento."""
     style = doc.styles['Normal']
     font = style.font
     font.name = 'Calibri'
-    font.size = Pt(11)
+    font.size = Pt(10.5)
     font.color.rgb = COR_TEXTO
     style.paragraph_format.space_after = Pt(6)
-    style.paragraph_format.line_spacing = 1.2
+    style.paragraph_format.line_spacing = 1.25
 
-    configs = [
-        (1, 22, COR_PRIMARIA, 24, 10),
-        (2, 16, COR_SECUNDARIA, 18, 8),
-        (3, 13, COR_PRIMARIA, 14, 6),
-    ]
-    for nivel, size, color, space_before, space_after in configs:
-        h = doc.styles[f'Heading {nivel}']
-        h.font.name = 'Calibri'
-        h.font.size = Pt(size)
-        h.font.color.rgb = color
-        h.font.bold = True
-        h.paragraph_format.space_before = Pt(space_before)
-        h.paragraph_format.space_after = Pt(space_after)
-        if nivel == 1:
-            h.paragraph_format.keep_with_next = True
+    # Heading 1: titulo de secao principal, azul navy com barra accent
+    h1 = doc.styles['Heading 1']
+    h1.font.name = 'Calibri'
+    h1.font.size = Pt(22)
+    h1.font.color.rgb = COR_PRIMARIA
+    h1.font.bold = True
+    h1.paragraph_format.space_before = Pt(28)
+    h1.paragraph_format.space_after = Pt(12)
+    h1.paragraph_format.keep_with_next = True
+    # Borda inferior accent
+    pBdr = parse_xml(
+        f'<w:pBdr {nsdecls("w")}>'
+        f'  <w:bottom w:val="single" w:sz="12" w:space="4" w:color="{COR_BORDA_ACCENT}"/>'
+        f'</w:pBdr>'
+    )
+    h1.paragraph_format.element.get_or_add_pPr().append(pBdr)
+
+    # Heading 2: subsecao, azul royal
+    h2 = doc.styles['Heading 2']
+    h2.font.name = 'Calibri'
+    h2.font.size = Pt(16)
+    h2.font.color.rgb = COR_SECUNDARIA
+    h2.font.bold = True
+    h2.paragraph_format.space_before = Pt(20)
+    h2.paragraph_format.space_after = Pt(8)
+    h2.paragraph_format.keep_with_next = True
+
+    # Heading 3: sub-subsecao, navy
+    h3 = doc.styles['Heading 3']
+    h3.font.name = 'Calibri'
+    h3.font.size = Pt(13)
+    h3.font.color.rgb = COR_PRIMARIA
+    h3.font.bold = True
+    h3.paragraph_format.space_before = Pt(14)
+    h3.paragraph_format.space_after = Pt(6)
+
+def _add_header_footer(doc, prospect, tipo):
+    """Adiciona header e footer a todas as secoes."""
+    for section in doc.sections:
+        # Header
+        header = section.header
+        header.is_linked_to_previous = False
+        hp = header.paragraphs[0] if header.paragraphs else header.add_paragraph()
+        hp.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        hp.paragraph_format.space_after = Pt(0)
+        run = hp.add_run(f'MACFOR | Diagnostico {prospect}')
+        run.font.size = Pt(7.5)
+        run.font.color.rgb = COR_TEXTO_LEVE
+        run.font.name = 'Calibri'
+        # Borda inferior do header
+        pBdr = parse_xml(
+            f'<w:pBdr {nsdecls("w")}>'
+            f'  <w:bottom w:val="single" w:sz="4" w:space="4" w:color="DDDDDD"/>'
+            f'</w:pBdr>'
+        )
+        hp.paragraph_format.element.get_or_add_pPr().append(pBdr)
+
+        # Footer
+        footer = section.footer
+        footer.is_linked_to_previous = False
+        fp = footer.paragraphs[0] if footer.paragraphs else footer.add_paragraph()
+        fp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        fp.paragraph_format.space_before = Pt(4)
+        label = 'Confidencial | Uso Interno' if tipo == 'interno' else 'Confidencial'
+        run = fp.add_run(f'{label} | Macfor Marketing Intelligence')
+        run.font.size = Pt(7)
+        run.font.color.rgb = RGBColor(0xBB, 0xBB, 0xBB)
+        run.font.name = 'Calibri'
 
 def _add_capa(doc, prospect, tipo='cliente'):
-    """Adiciona capa elegante ao documento."""
+    """Adiciona capa premium ao documento."""
     # Espacamento superior
-    for _ in range(4):
+    for _ in range(3):
         p = doc.add_paragraph()
         p.paragraph_format.space_after = Pt(0)
 
-    # Linha decorativa superior
-    linha = doc.add_paragraph()
-    linha.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = linha.add_run('_' * 40)
-    run.font.color.rgb = COR_ACCENT
-    run.font.size = Pt(14)
+    # Barra decorativa superior (simulada com tabela de 1 celula)
+    tbl = doc.add_table(rows=1, cols=1)
+    tbl.alignment = WD_TABLE_ALIGNMENT.CENTER
+    cell = tbl.rows[0].cells[0]
+    cell.text = ''
+    _colorir_celula(cell, COR_BORDA_ACCENT)
+    cell.width = Cm(8)
+    p = cell.paragraphs[0]
+    p.paragraph_format.space_before = Pt(0)
+    p.paragraph_format.space_after = Pt(0)
+    run = p.add_run(' ')
+    run.font.size = Pt(3)
 
-    doc.add_paragraph('')
+    for _ in range(2):
+        doc.add_paragraph('').paragraph_format.space_after = Pt(0)
 
     # Titulo principal
     titulo = doc.add_paragraph()
     titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    titulo.paragraph_format.space_after = Pt(4)
+    titulo.paragraph_format.space_after = Pt(2)
     run = titulo.add_run('DIAGNOSTICO')
-    run.font.size = Pt(36)
+    run.font.size = Pt(40)
     run.font.color.rgb = COR_PRIMARIA
     run.font.bold = True
-    run.font.name = 'Calibri'
+    run.font.name = 'Calibri Light'
 
     sub1 = doc.add_paragraph()
     sub1.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    sub1.paragraph_format.space_after = Pt(20)
+    sub1.paragraph_format.space_after = Pt(6)
     run = sub1.add_run('ESTRATEGICO DIGITAL')
-    run.font.size = Pt(28)
+    run.font.size = Pt(26)
     run.font.color.rgb = COR_SECUNDARIA
-    run.font.bold = False
-    run.font.name = 'Calibri'
+    run.font.name = 'Calibri Light'
+
+    # Linha fina
+    sep = doc.add_paragraph()
+    sep.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    sep.paragraph_format.space_before = Pt(10)
+    sep.paragraph_format.space_after = Pt(10)
+    run = sep.add_run('__________')
+    run.font.color.rgb = COR_ACCENT
+    run.font.size = Pt(16)
 
     # Nome do prospect
     nome_p = doc.add_paragraph()
     nome_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    nome_p.paragraph_format.space_after = Pt(30)
+    nome_p.paragraph_format.space_after = Pt(40)
     run = nome_p.add_run(prospect.upper())
-    run.font.size = Pt(24)
+    run.font.size = Pt(28)
     run.font.color.rgb = COR_ACCENT
     run.font.bold = True
     run.font.name = 'Calibri'
 
-    # Linha decorativa inferior
-    linha2 = doc.add_paragraph()
-    linha2.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = linha2.add_run('_' * 40)
-    run.font.color.rgb = COR_ACCENT
-    run.font.size = Pt(14)
+    for _ in range(3):
+        doc.add_paragraph('').paragraph_format.space_after = Pt(0)
 
-    doc.add_paragraph('')
-    doc.add_paragraph('')
+    # Tipo de documento e data em box sutil
+    info_tbl = doc.add_table(rows=1, cols=1)
+    info_tbl.alignment = WD_TABLE_ALIGNMENT.CENTER
+    info_cell = info_tbl.rows[0].cells[0]
+    _colorir_celula(info_cell, COR_BG_CLARO)
+    info_cell.text = ''
 
-    # Tipo de documento
-    label = 'Documento Interno | Uso Exclusivo da Agencia' if tipo == 'interno' else 'Apresentacao Executiva | Confidencial'
-    tipo_p = doc.add_paragraph()
-    tipo_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = tipo_p.add_run(label)
-    run.font.size = Pt(11)
-    run.font.color.rgb = COR_TEXTO_LEVE
-    run.font.name = 'Calibri'
-    run.italic = True
-
-    # Data
-    data_p = doc.add_paragraph()
-    data_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = data_p.add_run(datetime.now().strftime('%B %Y').title())
-    run.font.size = Pt(12)
+    label = 'Documento Interno | Uso Exclusivo da Agencia' if tipo == 'interno' else 'Apresentacao Executiva'
+    ip = info_cell.paragraphs[0]
+    ip.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    ip.paragraph_format.space_before = Pt(12)
+    ip.paragraph_format.space_after = Pt(4)
+    run = ip.add_run(label)
+    run.font.size = Pt(10)
     run.font.color.rgb = COR_TEXTO_LEVE
     run.font.name = 'Calibri'
 
-    doc.add_paragraph('')
-    doc.add_paragraph('')
+    ip2 = info_cell.add_paragraph()
+    ip2.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    ip2.paragraph_format.space_after = Pt(12)
+    run = ip2.add_run(datetime.now().strftime('%d de %B de %Y').replace(
+        'January', 'Janeiro').replace('February', 'Fevereiro').replace('March', 'Marco').replace(
+        'April', 'Abril').replace('May', 'Maio').replace('June', 'Junho').replace(
+        'July', 'Julho').replace('August', 'Agosto').replace('September', 'Setembro').replace(
+        'October', 'Outubro').replace('November', 'Novembro').replace('December', 'Dezembro'))
+    run.font.size = Pt(10)
+    run.font.color.rgb = COR_TEXTO_LEVE
+    run.font.name = 'Calibri'
+
+    for _ in range(2):
+        doc.add_paragraph('').paragraph_format.space_after = Pt(0)
 
     # Marca Macfor
     marca = doc.add_paragraph()
     marca.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = marca.add_run('MACFOR')
-    run.font.size = Pt(16)
+    run.font.size = Pt(18)
     run.font.color.rgb = COR_PRIMARIA
     run.font.bold = True
     run.font.name = 'Calibri'
 
     desc = doc.add_paragraph()
     desc.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    desc.paragraph_format.space_after = Pt(2)
     run = desc.add_run('Marketing Intelligence & Digital Strategy')
-    run.font.size = Pt(10)
+    run.font.size = Pt(9)
     run.font.color.rgb = COR_TEXTO_LEVE
     run.font.name = 'Calibri'
     run.italic = True
@@ -1834,16 +2075,36 @@ def _add_capa(doc, prospect, tipo='cliente'):
 
 def _colorir_celula(cell, cor_hex):
     """Aplica cor de fundo a uma celula."""
-    shading = parse_xml(f'<w:shd {nsdecls("w")} w:fill="{cor_hex}"/>')
+    if isinstance(cor_hex, str):
+        hex_val = cor_hex
+    else:
+        hex_val = f'{cor_hex.red:02X}{cor_hex.green:02X}{cor_hex.blue:02X}' if hasattr(cor_hex, 'red') else str(cor_hex)
+    shading = parse_xml(f'<w:shd {nsdecls("w")} w:fill="{hex_val}"/>')
     cell._tc.get_or_add_tcPr().append(shading)
+
+def _set_cell_border(cell, side, color='DDDDDD', size='4', style='single'):
+    """Define borda de um lado de uma celula."""
+    tc = cell._tc
+    tcPr = tc.get_or_add_tcPr()
+    borders = tcPr.find(qn('w:tcBorders'))
+    if borders is None:
+        borders = parse_xml(f'<w:tcBorders {nsdecls("w")}/>')
+        tcPr.append(borders)
+    border_el = parse_xml(
+        f'<w:{side} {nsdecls("w")} w:val="{style}" w:sz="{size}" w:space="0" w:color="{color}"/>'
+    )
+    existing = borders.find(qn(f'w:{side}'))
+    if existing is not None:
+        borders.remove(existing)
+    borders.append(border_el)
 
 def _formatar_celula(cell, font_size=9, bold=False, color=None, align=None):
     """Formata texto de uma celula."""
     for p in cell.paragraphs:
         if align:
             p.alignment = align
-        p.paragraph_format.space_before = Pt(2)
-        p.paragraph_format.space_after = Pt(2)
+        p.paragraph_format.space_before = Pt(3)
+        p.paragraph_format.space_after = Pt(3)
         for r in p.runs:
             r.font.size = Pt(font_size)
             r.font.name = 'Calibri'
@@ -1852,12 +2113,10 @@ def _formatar_celula(cell, font_size=9, bold=False, color=None, align=None):
                 r.font.color.rgb = color
 
 def _add_tabela_markdown(doc, linhas_tabela):
-    """Converte tabela markdown em tabela DOCX elegante."""
-    # Parse das linhas da tabela
+    """Converte tabela markdown em tabela DOCX com design premium."""
     rows_data = []
     for linha in linhas_tabela:
         cells = [c.strip() for c in linha.strip('|').split('|')]
-        # Ignora linhas separadoras (---|---|---)
         if cells and not all(re.match(r'^[-:]+$', c) for c in cells):
             rows_data.append(cells)
 
@@ -1868,23 +2127,28 @@ def _add_tabela_markdown(doc, linhas_tabela):
     table = doc.add_table(rows=0, cols=num_cols)
     table.style = 'Table Grid'
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    table.autofit = True
 
     for i, row_data in enumerate(rows_data):
         row = table.add_row()
         for j in range(num_cols):
             val = row_data[j] if j < len(row_data) else ''
-            row.cells[j].text = val
+            cell = row.cells[j]
+            cell.text = val
             if i == 0:
-                # Header row
-                _colorir_celula(row.cells[j], '0D1B2A')
-                _formatar_celula(row.cells[j], font_size=9, bold=True,
-                                color=RGBColor(0xFF, 0xFF, 0xFF))
+                _colorir_celula(cell, '0D1B2A')
+                _formatar_celula(cell, font_size=9, bold=True,
+                                color=RGBColor(0xFF, 0xFF, 0xFF),
+                                align=WD_ALIGN_PARAGRAPH.CENTER)
             else:
-                if i % 2 == 0:
-                    _colorir_celula(row.cells[j], 'F4F6F9')
-                _formatar_celula(row.cells[j], font_size=9)
+                bg = COR_BG_CLARO if i % 2 == 0 else 'FFFFFF'
+                _colorir_celula(cell, bg)
+                _formatar_celula(cell, font_size=9, color=COR_TEXTO)
 
-    doc.add_paragraph('')
+    # Espacamento apos tabela
+    p = doc.add_paragraph('')
+    p.paragraph_format.space_before = Pt(4)
+    p.paragraph_format.space_after = Pt(4)
 
 def _add_runs_formatados(paragraph, texto):
     """Adiciona texto com **bold** e *italic* como runs formatados."""
@@ -1894,39 +2158,135 @@ def _add_runs_formatados(paragraph, texto):
             run = paragraph.add_run(parte[2:-2])
             run.bold = True
             run.font.color.rgb = COR_PRIMARIA
-        elif parte.startswith('*') and parte.endswith('*'):
+            run.font.name = 'Calibri'
+        elif parte.startswith('*') and parte.endswith('*') and len(parte) > 2:
             run = paragraph.add_run(parte[1:-1])
             run.italic = True
             run.font.color.rgb = COR_TEXTO_LEVE
+            run.font.name = 'Calibri'
         else:
-            paragraph.add_run(parte)
+            run = paragraph.add_run(parte)
+            run.font.name = 'Calibri'
 
 def _add_callout_box(doc, texto, tipo='info'):
-    """Adiciona caixa de destaque visual."""
-    cores = {
-        'info': ('E8F0FE', COR_SECUNDARIA),
-        'warning': ('FFF3E0', COR_ACCENT),
-        'success': ('E8F5E9', COR_SUCESSO),
+    """Adiciona caixa de destaque com borda lateral colorida."""
+    cores_map = {
+        'info': (COR_BG_CLARO, '1B4D89'),
+        'warning': (COR_BG_ACCENT, COR_BORDA_ACCENT),
+        'success': ('E8F5E9', '0A8A5E'),
     }
-    bg, _ = cores.get(tipo, cores['info'])
+    bg, borda = cores_map.get(tipo, cores_map['info'])
 
     table = doc.add_table(rows=1, cols=1)
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
     cell = table.rows[0].cells[0]
     _colorir_celula(cell, bg)
+    # Borda lateral esquerda colorida grossa
+    _set_cell_border(cell, 'left', color=borda, size='24', style='single')
+    _set_cell_border(cell, 'top', color='FFFFFF', size='0', style='none')
+    _set_cell_border(cell, 'bottom', color='FFFFFF', size='0', style='none')
+    _set_cell_border(cell, 'right', color='FFFFFF', size='0', style='none')
+
     cell.text = ''
     p = cell.paragraphs[0]
-    p.paragraph_format.space_before = Pt(8)
-    p.paragraph_format.space_after = Pt(8)
+    p.paragraph_format.space_before = Pt(10)
+    p.paragraph_format.space_after = Pt(10)
+    p.paragraph_format.left_indent = Cm(0.3)
     _add_runs_formatados(p, texto)
     for run in p.runs:
         run.font.size = Pt(10)
+
+    doc.add_paragraph('').paragraph_format.space_after = Pt(2)
+
+def _add_kpi_card(doc, items):
+    """Adiciona cards de KPI lado a lado (ate 4 items).
+    items = [(label, valor, cor_hex), ...]"""
+    n = min(len(items), 4)
+    if n == 0:
+        return
+    table = doc.add_table(rows=2, cols=n)
+    table.alignment = WD_TABLE_ALIGNMENT.CENTER
+
+    for j, (label, valor, cor) in enumerate(items[:n]):
+        # Valor
+        cell_val = table.rows[0].cells[j]
+        cell_val.text = ''
+        _colorir_celula(cell_val, COR_BG_CLARO)
+        pv = cell_val.paragraphs[0]
+        pv.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        pv.paragraph_format.space_before = Pt(10)
+        pv.paragraph_format.space_after = Pt(2)
+        run = pv.add_run(str(valor))
+        run.font.size = Pt(20)
+        run.font.bold = True
+        run.font.color.rgb = cor if isinstance(cor, RGBColor) else COR_SECUNDARIA
         run.font.name = 'Calibri'
 
-    doc.add_paragraph('')
+        # Label
+        cell_lbl = table.rows[1].cells[j]
+        cell_lbl.text = ''
+        _colorir_celula(cell_lbl, COR_BG_CLARO)
+        pl = cell_lbl.paragraphs[0]
+        pl.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        pl.paragraph_format.space_before = Pt(0)
+        pl.paragraph_format.space_after = Pt(8)
+        run = pl.add_run(label)
+        run.font.size = Pt(8)
+        run.font.color.rgb = COR_TEXTO_LEVE
+        run.font.name = 'Calibri'
+        run.bold = True
+
+    # Remover bordas da tabela de KPIs
+    for row in table.rows:
+        for cell in row.cells:
+            for side in ['top', 'bottom', 'left', 'right']:
+                _set_cell_border(cell, side, color='F4F7FA', size='0', style='none')
+
+    doc.add_paragraph('').paragraph_format.space_after = Pt(4)
+
+def _add_section_divider(doc, titulo_secao, subtitulo=None):
+    """Adiciona uma pagina divisoria de secao elegante."""
+    doc.add_page_break()
+    for _ in range(5):
+        doc.add_paragraph('').paragraph_format.space_after = Pt(0)
+
+    # Barra accent
+    bar = doc.add_table(rows=1, cols=1)
+    bar.alignment = WD_TABLE_ALIGNMENT.CENTER
+    bc = bar.rows[0].cells[0]
+    bc.text = ''
+    _colorir_celula(bc, COR_BORDA_ACCENT)
+    bp = bc.paragraphs[0]
+    bp.paragraph_format.space_before = Pt(0)
+    bp.paragraph_format.space_after = Pt(0)
+    run = bp.add_run(' ')
+    run.font.size = Pt(2)
+
+    doc.add_paragraph('').paragraph_format.space_after = Pt(20)
+
+    # Titulo da secao
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = p.add_run(titulo_secao.upper())
+    run.font.size = Pt(28)
+    run.font.color.rgb = COR_PRIMARIA
+    run.font.bold = True
+    run.font.name = 'Calibri Light'
+
+    if subtitulo:
+        p2 = doc.add_paragraph()
+        p2.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p2.paragraph_format.space_before = Pt(8)
+        run = p2.add_run(subtitulo)
+        run.font.size = Pt(12)
+        run.font.color.rgb = COR_TEXTO_LEVE
+        run.font.name = 'Calibri'
+        run.italic = True
+
+    doc.add_page_break()
 
 def _markdown_para_docx(doc, texto_md):
-    """Converte markdown em DOCX com suporte a tabelas, callouts e formatacao rica."""
+    """Converte markdown em DOCX com design premium."""
     if not texto_md:
         return
 
@@ -1934,6 +2294,7 @@ def _markdown_para_docx(doc, texto_md):
     i = 0
     tabela_buffer = []
     em_tabela = False
+    blank_count = 0
 
     while i < len(linhas):
         linha = linhas[i]
@@ -1943,60 +2304,96 @@ def _markdown_para_docx(doc, texto_md):
         if '|' in stripped and stripped.startswith('|'):
             tabela_buffer.append(stripped)
             em_tabela = True
+            blank_count = 0
             i += 1
             continue
         elif em_tabela:
-            # Acabou a tabela
             _add_tabela_markdown(doc, tabela_buffer)
             tabela_buffer = []
             em_tabela = False
 
         if not stripped:
+            blank_count += 1
+            # Adiciona espacamento para paragrafos vazios (max 1 seguido)
+            if blank_count <= 1:
+                p = doc.add_paragraph('')
+                p.paragraph_format.space_before = Pt(0)
+                p.paragraph_format.space_after = Pt(4)
             i += 1
             continue
 
-        # Headings
-        if stripped.startswith('#### '):
+        blank_count = 0
+
+        # Heading 1: adiciona como section divider se e titulo principal
+        if stripped.startswith('# ') and not stripped.startswith('## '):
+            titulo_h1 = stripped[2:]
+            # Verifica se o titulo e principal (ex: nome do diagnostico) - adiciona page break
+            doc.add_heading(titulo_h1, level=1)
+
+        elif stripped.startswith('## '):
+            titulo_h2 = stripped[3:]
+            # Adiciona um espacamento extra antes de secoes H2 para "respirar"
+            p_space = doc.add_paragraph('')
+            p_space.paragraph_format.space_before = Pt(8)
+            p_space.paragraph_format.space_after = Pt(0)
+            doc.add_heading(titulo_h2, level=2)
+
+        elif stripped.startswith('### '):
+            doc.add_heading(stripped[4:], level=3)
+
+        elif stripped.startswith('#### '):
             p = doc.add_paragraph()
-            p.paragraph_format.space_before = Pt(10)
+            p.paragraph_format.space_before = Pt(12)
             p.paragraph_format.space_after = Pt(4)
             run = p.add_run(stripped[5:])
             run.bold = True
             run.font.size = Pt(11)
-            run.font.color.rgb = COR_SECUNDARIA
+            run.font.color.rgb = COR_ACCENT
             run.font.name = 'Calibri'
-        elif stripped.startswith('### '):
-            doc.add_heading(stripped[4:], level=3)
-        elif stripped.startswith('## '):
-            doc.add_heading(stripped[3:], level=2)
-        elif stripped.startswith('# '):
-            doc.add_heading(stripped[2:], level=1)
-        # Separadores
+
+        # Separadores -- linha horizontal elegante
         elif stripped.startswith('---'):
             p = doc.add_paragraph()
-            p.paragraph_format.space_before = Pt(8)
-            p.paragraph_format.space_after = Pt(8)
-        # Blockquotes como callout
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p.paragraph_format.space_before = Pt(12)
+            p.paragraph_format.space_after = Pt(12)
+            run = p.add_run('_' * 45)
+            run.font.color.rgb = RGBColor(0xE0, 0xE0, 0xE0)
+            run.font.size = Pt(8)
+
+        # Blockquotes como callout com borda lateral
         elif stripped.startswith('> '):
             texto_quote = stripped[2:]
             _add_callout_box(doc, texto_quote, tipo='info')
+
         # Bullet list
         elif stripped.startswith('- ') or stripped.startswith('* '):
             p = doc.add_paragraph(style='List Bullet')
+            p.paragraph_format.space_before = Pt(1)
+            p.paragraph_format.space_after = Pt(1)
             _add_runs_formatados(p, stripped[2:])
-        # Sub-bullet
+
+        # Sub-bullet (indentado)
         elif re.match(r'^  +[-*] ', stripped):
             p = doc.add_paragraph(style='List Bullet 2')
+            p.paragraph_format.space_before = Pt(1)
+            p.paragraph_format.space_after = Pt(1)
             texto = re.sub(r'^  +[-*] ', '', stripped)
             _add_runs_formatados(p, texto)
+
         # Numbered list
         elif re.match(r'^\d+[\.\)] ', stripped):
             p = doc.add_paragraph(style='List Number')
+            p.paragraph_format.space_before = Pt(2)
+            p.paragraph_format.space_after = Pt(2)
             texto = re.sub(r'^\d+[\.\)] ', '', stripped)
             _add_runs_formatados(p, texto)
+
         # Normal paragraph
         else:
             p = doc.add_paragraph()
+            p.paragraph_format.space_before = Pt(2)
+            p.paragraph_format.space_after = Pt(4)
             _add_runs_formatados(p, stripped)
 
         i += 1
@@ -2005,53 +2402,93 @@ def _markdown_para_docx(doc, texto_md):
     if tabela_buffer:
         _add_tabela_markdown(doc, tabela_buffer)
 
-def _add_rodape(doc):
-    """Adiciona rodape elegante."""
-    doc.add_paragraph('')
-    # Linha separadora
-    sep = doc.add_paragraph()
-    sep.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = sep.add_run('_' * 50)
-    run.font.color.rgb = RGBColor(0xDD, 0xDD, 0xDD)
-    run.font.size = Pt(8)
+def _add_contracapa(doc, prospect, tipo):
+    """Adiciona contracapa final elegante."""
+    doc.add_page_break()
+    for _ in range(6):
+        doc.add_paragraph('').paragraph_format.space_after = Pt(0)
 
-    doc.add_paragraph('')
+    # Barra accent
+    bar = doc.add_table(rows=1, cols=1)
+    bar.alignment = WD_TABLE_ALIGNMENT.CENTER
+    bc = bar.rows[0].cells[0]
+    bc.text = ''
+    _colorir_celula(bc, COR_BORDA_ACCENT)
+    bp = bc.paragraphs[0]
+    bp.paragraph_format.space_before = Pt(0)
+    bp.paragraph_format.space_after = Pt(0)
+    run = bp.add_run(' ')
+    run.font.size = Pt(2)
+
+    doc.add_paragraph('').paragraph_format.space_after = Pt(20)
+
+    # Macfor
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = p.add_run('MACFOR | Marketing Intelligence & Digital Strategy')
-    run.font.size = Pt(9)
-    run.font.color.rgb = COR_TEXTO_LEVE
+    run = p.add_run('MACFOR')
+    run.font.size = Pt(24)
+    run.font.color.rgb = COR_PRIMARIA
+    run.font.bold = True
     run.font.name = 'Calibri'
-    run.bold = True
 
     p2 = doc.add_paragraph()
     p2.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = p2.add_run('Este documento e confidencial e destinado exclusivamente ao uso do destinatario.')
+    p2.paragraph_format.space_after = Pt(20)
+    run = p2.add_run('Marketing Intelligence & Digital Strategy')
+    run.font.size = Pt(11)
+    run.font.color.rgb = COR_TEXTO_LEVE
+    run.font.name = 'Calibri'
+    run.italic = True
+
+    # Mensagem de encerramento
+    msg = doc.add_paragraph()
+    msg.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    msg.paragraph_format.space_after = Pt(30)
+    if tipo == 'cliente':
+        texto_msg = f'Diagnostico elaborado exclusivamente para {prospect}.'
+    else:
+        texto_msg = f'Documento interno | Diagnostico {prospect}'
+    run = msg.add_run(texto_msg)
+    run.font.size = Pt(10)
+    run.font.color.rgb = COR_TEXTO_LEVE
+    run.font.name = 'Calibri'
+
+    # Confidencialidade
+    conf = doc.add_paragraph()
+    conf.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = conf.add_run(
+        'Este documento contem informacoes confidenciais e proprietarias.\n'
+        'A reproducao ou distribuicao sem autorizacao expressa da Macfor e vedada.'
+    )
     run.font.size = Pt(8)
-    run.font.color.rgb = RGBColor(0xAA, 0xAA, 0xAA)
+    run.font.color.rgb = RGBColor(0xBB, 0xBB, 0xBB)
     run.font.name = 'Calibri'
     run.italic = True
 
 def gerar_docx(prospect, texto_markdown, dados_brutos=None, tipo='cliente'):
-    """Gera documento DOCX profissional."""
-    _ = dados_brutos  # Mantido na assinatura por compatibilidade
+    """Gera documento DOCX profissional premium."""
+    _ = dados_brutos
+
     doc = Document()
 
-    # Margens elegantes
+    # Margens
     for section in doc.sections:
-        section.top_margin = Cm(2.5)
-        section.bottom_margin = Cm(2)
-        section.left_margin = Cm(2.8)
-        section.right_margin = Cm(2.8)
+        section.top_margin = Cm(2.2)
+        section.bottom_margin = Cm(1.8)
+        section.left_margin = Cm(2.5)
+        section.right_margin = Cm(2.5)
+        section.header_distance = Cm(1)
+        section.footer_distance = Cm(1)
 
     _setup_styles(doc)
     _add_capa(doc, prospect, tipo)
+    _add_header_footer(doc, prospect, tipo)
 
     # Conteudo principal
     _markdown_para_docx(doc, texto_markdown)
 
-    # Rodape
-    _add_rodape(doc)
+    # Contracapa
+    _add_contracapa(doc, prospect, tipo)
 
     buf = BytesIO()
     doc.save(buf)
